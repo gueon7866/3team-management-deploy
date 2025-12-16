@@ -1,0 +1,319 @@
+@use "./variables.scss" as *;
+
+// 로그인 페이지
+.login-page {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  width: 100%;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+
+  .login-container {
+    background: $bg-primary;
+    padding: $spacing-2xl;
+    border-radius: $border-radius;
+    box-shadow: $shadow-lg;
+    width: 100%;
+    max-width: 400px;
+
+    h2 {
+      text-align: center;
+      margin-bottom: $spacing-xl;
+      color: $text-primary;
+    }
+
+    .sample-account-info {
+      background: rgba(37, 99, 235, 0.1);
+      border: 1px solid rgba(37, 99, 235, 0.2);
+      border-radius: $border-radius;
+      padding: $spacing-md;
+      margin-bottom: $spacing-xl;
+      font-size: $font-size-sm;
+
+      p {
+        margin: $spacing-xs 0;
+        color: $text-secondary;
+
+        &:first-child {
+          font-weight: 600;
+          color: $primary-color;
+          margin-bottom: $spacing-sm;
+        }
+      }
+    }
+
+    .success-message,
+    .error-message {
+      padding: $spacing-md;
+      border-radius: $border-radius;
+      margin-bottom: $spacing-md;
+      font-size: $font-size-sm;
+    }
+
+    .success-message {
+      background: rgba(16, 185, 129, 0.1);
+      color: $success-color;
+    }
+
+    .error-message {
+      background: rgba(239, 68, 68, 0.1);
+      color: $danger-color;
+    }
+
+    form {
+      .form-group {
+        margin-bottom: $spacing-lg;
+
+        label {
+          display: block;
+          margin-bottom: $spacing-sm;
+          font-weight: 500;
+        }
+
+        input {
+          width: 100%;
+          padding: $spacing-sm $spacing-md;
+          border: 1px solid $border-color;
+          border-radius: $border-radius;
+          font-size: $font-size-sm;
+
+          &:focus {
+            outline: none;
+            border-color: $primary-color;
+          }
+        }
+      }
+
+      button[type="submit"] {
+        width: 100%;
+        padding: $spacing-md;
+        font-size: $font-size-base;
+      }
+    }
+  }
+}
+
+// 로더
+.loader {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: $spacing-xl;
+
+  .spinner {
+    border: 3px solid rgba(0, 0, 0, 0.1);
+    border-top: 3px solid $primary-color;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+  }
+
+  &.loader-small .spinner {
+    width: 20px;
+    height: 20px;
+  }
+
+  &.loader-medium .spinner {
+    width: 40px;
+    height: 40px;
+  }
+
+  &.loader-large .spinner {
+    width: 60px;
+    height: 60px;
+  }
+}
+
+.loader-fullscreen {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.9);
+  z-index: 9999;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+// 에러 메시지
+.error-message {
+  text-align: center;
+  padding: $spacing-xl;
+
+  .error-icon {
+    font-size: 48px;
+    margin-bottom: $spacing-md;
+  }
+
+  p {
+    color: $text-secondary;
+    margin-bottom: $spacing-lg;
+  }
+}
+
+// 빈 상태
+.empty-state {
+  text-align: center;
+  padding: $spacing-2xl;
+
+  .empty-icon {
+    font-size: 64px;
+    margin-bottom: $spacing-md;
+  }
+
+  p {
+    color: $text-secondary;
+    margin-bottom: $spacing-lg;
+  }
+}
+
+// 모달
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+
+  .modal-content {
+    background: $bg-primary;
+    padding: $spacing-xl;
+    border-radius: $border-radius;
+    max-width: 500px;
+    width: 90%;
+
+    h3 {
+      margin-bottom: $spacing-md;
+    }
+
+    p {
+      color: $text-secondary;
+      margin-bottom: $spacing-xl;
+    }
+
+    .modal-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: $spacing-sm;
+    }
+  }
+}
+
+// 디테일 섹션
+.detail-section {
+  .detail-row {
+    display: flex;
+    padding: $spacing-md 0;
+    border-bottom: 1px solid $border-color;
+
+    &:last-child {
+      border-bottom: none;
+    }
+
+    .label {
+      width: 150px;
+      font-weight: 600;
+      color: $text-primary;
+    }
+
+    .value {
+      flex: 1;
+      color: $text-secondary;
+    }
+  }
+}
+
+// 최근 섹션
+.recent-section {
+  margin-bottom: $spacing-xl;
+
+  h4 {
+    margin-bottom: $spacing-md;
+    color: $text-primary;
+  }
+}
+
+// 차트 플레이스홀더
+.chart-placeholder {
+  padding: $spacing-2xl;
+  text-align: center;
+  background: $bg-secondary;
+  border-radius: $border-radius;
+  color: $text-secondary;
+
+  p {
+    margin-bottom: $spacing-sm;
+  }
+}
+
+// Breadcrumb
+.breadcrumb {
+  padding: $spacing-md 0;
+  font-size: $font-size-sm;
+  color: $text-secondary;
+
+  a {
+    color: $primary-color;
+    text-decoration: none;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+}
+
+// 반응형
+@media (max-width: 768px) {
+  .admin-layout {
+    .admin-sidebar {
+      width: 100%;
+      position: relative;
+      height: auto;
+    }
+
+    .admin-main {
+      margin-left: 0;
+    }
+  }
+
+  .stats-cards {
+    grid-template-columns: 1fr;
+  }
+
+  .filter-bar {
+    flex-direction: column;
+
+    .filter-group {
+      width: 100%;
+    }
+  }
+
+  .table-wrapper {
+    overflow-x: scroll;
+  }
+
+  .detail-section .detail-row {
+    flex-direction: column;
+
+    .label {
+      width: 100%;
+      margin-bottom: $spacing-xs;
+    }
+  }
+}

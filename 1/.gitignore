@@ -1,0 +1,12 @@
+# Ignore local environment files with secrets
+.env
+
+# Node modules and logs
+node_modules/
+npm-debug.log*
+logs/
+*.log
+
+# Optional Mac/Windows metadata
+.DS_Store
+Thumbs.db
