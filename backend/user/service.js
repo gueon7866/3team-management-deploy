@@ -23,7 +23,7 @@ export const updateMe = async (userId, updates) => {
     throw err;
   }
 
-  const fields = ["name", "phone"];
+  const fields = ["name", "phone", "profileImage"];
   fields.forEach((f) => {
     if (updates[f] !== undefined) user[f] = updates[f];
   });

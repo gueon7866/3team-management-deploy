@@ -5,9 +5,12 @@ import {
   createRoom,
   updateRoom,
   deleteRoom,
+  uploadRoomImages,
 } from "./controller.js";
 import { verifyToken } from "../common/authmiddleware.js";
 import requireRole from "../common/rolemiddleware.js";
+import { s3ImageUpload } from "../middlewares/s3Upload.js";
+import optionalMulter from "../middlewares/optionalMulter.js";
 
 const router = Router();
 
@@ -31,6 +34,7 @@ router.post(
   "/owner/:hotelId",
   verifyToken,
   requireRole("owner", "admin"),
+  optionalMulter(s3ImageUpload("room").array("images", 10)),
   createRoom
 );
 
@@ -40,6 +44,7 @@ router.patch(
   "/owner/:roomId",
   verifyToken,
   requireRole("owner", "admin"),
+  optionalMulter(s3ImageUpload("room").array("images", 10)),
   updateRoom
 );
 
@@ -48,7 +53,17 @@ router.put(
   "/owner/:roomId",
   verifyToken,
   requireRole("owner", "admin"),
+  optionalMulter(s3ImageUpload("room").array("images", 10)),
   updateRoom
+);
+
+// 객실 이미지 추가 업로드
+router.post(
+  "/owner/:roomId/images",
+  verifyToken,
+  requireRole("owner", "admin"),
+  optionalMulter(s3ImageUpload("room").array("images", 10)),
+  uploadRoomImages
 );
 
 // 객실 삭제

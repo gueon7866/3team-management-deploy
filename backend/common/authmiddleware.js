@@ -48,11 +48,11 @@ export const verifyToken = async (req, res, next) => {
   }
 };
 
-export const requireRole = (role) => {
-  return (req, res, next) => {
-    if (!req.user || req.user.role !== role) {
-      return res.status(403).json(errorResponse("FORBIDDEN", 403));
-    }
-    next();
-  };
+export const requireRole = (...roles) => {
+  return (req, res, next) => {
+    if (!req.user || !roles.includes(req.user.role)) {
+      return res.status(403).json(errorResponse("FORBIDDEN", 403));
+    }
+    next();
+  };
 };

@@ -1,5 +1,4 @@
-// hotel/route.js
-import { Router } from "express";
+import express from "express";
 import {
   getMyHotels,
   createHotel,
@@ -8,18 +7,17 @@ import {
   getPendingHotels,
   approveHotel,
   rejectHotel,
+  uploadHotelImages,
 } from "./controller.js";
+
 import { verifyToken } from "../common/authmiddleware.js";
 import requireRole from "../common/rolemiddleware.js";
+import { s3ImageUpload } from "../middlewares/s3Upload.js";
+import optionalMulter from "../middlewares/optionalMulter.js";
 
-const router = Router();
+const router = express.Router();
 
-//
-// OWNER(사업자)용
-// /api/hotel/owner...
-//
-
-// 내 호텔 목록 조회
+// OWNER
 router.get(
   "/owner",
   verifyToken,
@@ -27,15 +25,14 @@ router.get(
   getMyHotels
 );
 
-// 호텔 생성
 router.post(
   "/owner",
   verifyToken,
   requireRole("owner", "admin"),
+  optionalMulter(s3ImageUpload("hotel").array("images", 5)),
   createHotel
 );
 
-// 호텔 수정 (PATCH / PUT 둘 다 같은 핸들러)
 router.patch(
   "/owner/:hotelId",
   verifyToken,
@@ -43,19 +40,17 @@ router.patch(
   updateHotel
 );
 
-router.put(
-  "/owner/:hotelId",
+// 호텔 이미지 추가 업로드
+// POST /api/hotel/:id/images
+router.post(
+  "/:id/images",
   verifyToken,
   requireRole("owner", "admin"),
-  updateHotel
+  optionalMulter(s3ImageUpload("hotel").array("images", 5)),
+  uploadHotelImages
 );
 
-//
-// ADMIN용
-// /api/hotel/admin...
-//
-
-// 전체 호텔 목록 조회 (상태 필터 가능)
+// ADMINt
 router.get(
   "/admin",
   verifyToken,
@@ -63,7 +58,6 @@ router.get(
   getAllHotels
 );
 
-// 승인 대기 호텔 목록 (하위 호환성)
 router.get(
   "/admin/pending",
   verifyToken,
@@ -71,7 +65,6 @@ router.get(
   getPendingHotels
 );
 
-// 호텔 승인
 router.patch(
   "/admin/:hotelId/approve",
   verifyToken,
@@ -79,7 +72,6 @@ router.patch(
   approveHotel
 );
 
-// 호텔 반려
 router.patch(
   "/admin/:hotelId/reject",
   verifyToken,

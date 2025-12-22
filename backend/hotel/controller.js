@@ -1,12 +1,50 @@
 // hotel/controller.js
 import * as hotelService from "./service.js";
+import Hotel from "./model.js";
 import { successResponse, errorResponse } from "../common/response.js";
 
+const normalizeArrayField = (value) => {
+  if (value === undefined || value === null) return undefined;
+  if (Array.isArray(value)) return value;
+
+  if (typeof value === "string") {
+    const trimmed = value.trim();
+    if (trimmed === "") return [];
+
+    if (
+      (trimmed.startsWith("[") && trimmed.endsWith("]")) ||
+      (trimmed.startsWith("{") && trimmed.endsWith("}"))
+    ) {
+      try {
+        const parsed = JSON.parse(trimmed);
+        return Array.isArray(parsed) ? parsed : [parsed];
+      } catch (_) {}
+    }
+
+    if (trimmed.includes(",")) {
+      return trimmed
+        .split(",")
+        .map((s) => s.trim())
+        .filter(Boolean);
+    }
+
+    return [trimmed];
+  }
+
+  return [value];
+};
+
+const normalizeNumberField = (value) => {
+  if (value === undefined || value === null || value === "") return undefined;
+  if (typeof value === "number") return value;
+  const n = Number(value);
+  return Number.isFinite(n) ? n : undefined;
+};
+
 //
-// OWNER(사업자) 컨트롤러
+// OWNER
 //
 
-// GET /api/hotel/owner
 export const getMyHotels = async (req, res) => {
   try {
     const ownerId = req.user.id || req.user._id;
@@ -14,7 +52,6 @@ export const getMyHotels = async (req, res) => {
     const limit = parseInt(req.query.limit || 10, 10);
 
     const data = await hotelService.getHotelsByOwner(ownerId, { page, limit });
-
     return res.status(200).json(successResponse(data, "MY_HOTELS", 200));
   } catch (err) {
     return res
@@ -23,11 +60,32 @@ export const getMyHotels = async (req, res) => {
   }
 };
 
-// POST /api/hotel/owner
 export const createHotel = async (req, res) => {
   try {
     const ownerId = req.user.id || req.user._id;
-    const hotel = await hotelService.createHotel(ownerId, req.body);
+
+    const uploadedImages = req.files?.map((f) => f.location) || [];
+    const body = { ...req.body };
+
+    const freebies = normalizeArrayField(body.freebies);
+    const amenities = normalizeArrayField(body.amenities);
+    const imagesFromBody = normalizeArrayField(body.images);
+
+    if (freebies !== undefined) body.freebies = freebies;
+    if (amenities !== undefined) body.amenities = amenities;
+
+    if (uploadedImages.length > 0) {
+      body.images = imagesFromBody
+        ? [...imagesFromBody, ...uploadedImages]
+        : uploadedImages;
+    } else if (imagesFromBody) {
+      body.images = imagesFromBody;
+    }
+
+    const rating = normalizeNumberField(body.rating);
+    if (rating !== undefined) body.rating = rating;
+
+    const hotel = await hotelService.createHotel(ownerId, body);
 
     return res
       .status(201)
@@ -39,14 +97,25 @@ export const createHotel = async (req, res) => {
   }
 };
 
-// PATCH /api/hotel/owner/:hotelId
 export const updateHotel = async (req, res) => {
   try {
     const ownerId = req.user.id || req.user._id;
     const { hotelId } = req.params;
 
-    const hotel = await hotelService.updateHotel(ownerId, hotelId, req.body);
+    const body = { ...req.body };
 
+    const freebies = normalizeArrayField(body.freebies);
+    const amenities = normalizeArrayField(body.amenities);
+    const images = normalizeArrayField(body.images);
+
+    if (freebies !== undefined) body.freebies = freebies;
+    if (amenities !== undefined) body.amenities = amenities;
+    if (images !== undefined) body.images = images;
+
+    const rating = normalizeNumberField(body.rating);
+    if (rating !== undefined) body.rating = rating;
+
+    const hotel = await hotelService.updateHotel(ownerId, hotelId, body);
     return res.status(200).json(successResponse(hotel, "HOTEL_UPDATED", 200));
   } catch (err) {
     return res
@@ -56,26 +125,15 @@ export const updateHotel = async (req, res) => {
 };
 
 //
-// ADMIN 컨트롤러
+// ADMIN
+//
 
-// GET /api/hotel/admin - 전체 호텔 목록 (상태 필터 가능)
 export const getAllHotels = async (req, res) => {
   try {
-    const {
-      status,
-      page = 1,
-      limit = 20,
-    } = req.query;
+    const { status, page = 1, limit = 20 } = req.query;
 
-    const data = await hotelService.getAllHotels({
-      status,
-      page,
-      limit,
-    });
-
-    return res
-      .status(200)
-      .json(successResponse(data, "ALL_HOTELS", 200));
+    const data = await hotelService.getAllHotels({ status, page, limit });
+    return res.status(200).json(successResponse(data, "ALL_HOTELS", 200));
   } catch (err) {
     return res
       .status(err.statusCode || 400)
@@ -83,18 +141,12 @@ export const getAllHotels = async (req, res) => {
   }
 };
 
-// GET /api/hotel/admin/pending - 승인 대기 호텔 목록 (하위 호환성)
 export const getPendingHotels = async (req, res) => {
   try {
-    const {
-      page = 1,
-      limit = 20,
-    } = req.query;
+    const { page = 1, limit = 20 } = req.query;
 
-    const hotels = await hotelService.getPendingHotels({ page, limit });
-    return res
-      .status(200)
-      .json(successResponse(hotels, "PENDING_HOTELS", 200));
+    const data = await hotelService.getPendingHotels({ page, limit });
+    return res.status(200).json(successResponse(data, "PENDING_HOTELS", 200));
   } catch (err) {
     return res
       .status(err.statusCode || 400)
@@ -102,7 +154,6 @@ export const getPendingHotels = async (req, res) => {
   }
 };
 
-// PATCH /api/hotel/admin/:hotelId/approve
 export const approveHotel = async (req, res) => {
   try {
     const { hotelId } = req.params;
@@ -118,7 +169,6 @@ export const approveHotel = async (req, res) => {
   }
 };
 
-// PATCH /api/hotel/admin/:hotelId/reject
 export const rejectHotel = async (req, res) => {
   try {
     const { hotelId } = req.params;
@@ -133,4 +183,37 @@ export const rejectHotel = async (req, res) => {
       .json(errorResponse(err.message, err.statusCode || 400));
   }
 };
-// ⬆⬆ hotel/controller.js ADMIN 컨트롤러 교체 끝 ⬆⬆
+
+// 호텔 이미지 업로드
+export const uploadHotelImages = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const hotel = await Hotel.findById(id);
+    if (!hotel) {
+      return res.status(404).json(errorResponse("HOTEL_NOT_FOUND", 404));
+    }
+
+    if (
+      req.user?.role !== "admin" &&
+      hotel.owner &&
+      hotel.owner.toString() !== (req.user.id || req.user._id)?.toString()
+    ) {
+      return res.status(403).json(errorResponse("NO_PERMISSION", 403));
+    }
+
+    if (!req.files || req.files.length === 0) {
+      return res.status(400).json(errorResponse("NO_IMAGES_UPLOADED", 400));
+    }
+
+    const imageUrls = req.files.map((file) => file.location);
+    hotel.images = [...(hotel.images || []), ...imageUrls];
+    await hotel.save();
+
+    return res
+      .status(200)
+      .json(successResponse(hotel, "HOTEL_IMAGE_UPLOADED", 200));
+  } catch (err) {
+    return res.status(400).json(errorResponse(err.message, 400));
+  }
+};

@@ -26,6 +26,23 @@ export const updateMe = async (req, res) => {
   }
 };
 
+// PUT /api/user/me/profile-image
+export const uploadMyProfileImage = async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json(errorResponse("NO_IMAGE_UPLOADED", 400));
+    }
+    const user = await userService.updateMe(req.user.id || req.user._id, {
+      profileImage: req.file.location,
+    });
+    return res.status(200).json(successResponse(user, "PROFILE_IMAGE_UPDATED", 200));
+  } catch (err) {
+    return res
+      .status(err.statusCode || 400)
+      .json(errorResponse(err.message, err.statusCode || 400));
+  }
+};
+
 // PUT /api/user/me/password
 export const changePassword = async (req, res) => {
   try {
