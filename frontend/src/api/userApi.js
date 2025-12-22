@@ -25,6 +25,11 @@ export const userApi = {
   updateUserByAdmin: async (userId, data) => {
     return await axiosClient.put(`/user/admin/${userId}`, data);
   },
+
+  // 프로필 이미지 업로드
+  uploadMyProfileImage: async (formData) => {
+    return await axiosClient.put("/user/me/profile-image", formData);
+  },
 };
 
 export default userApi;

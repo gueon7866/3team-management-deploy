@@ -6,12 +6,12 @@ export const hotelApi = {
     return await axiosClient.get("/hotel/owner", { params });
   },
 
-  // 사업자: 호텔 생성
+  // 사업자: 호텔 생성 (FormData 지원)
   createHotel: async (data) => {
     return await axiosClient.post("/hotel/owner", data);
   },
 
-  // 사업자: 호텔 수정
+  // 사업자: 호텔 수정 (FormData 지원)
   updateHotel: async (hotelId, data) => {
     return await axiosClient.patch(`/hotel/owner/${hotelId}`, data);
   },
@@ -34,6 +34,11 @@ export const hotelApi = {
   // 관리자: 호텔 거절
   rejectHotel: async (hotelId) => {
     return await axiosClient.patch(`/hotel/admin/${hotelId}/reject`);
+  },
+
+  // 호텔 이미지 추가 업로드
+  uploadHotelImages: async (hotelId, formData) => {
+    return await axiosClient.post(`/hotel/${hotelId}/images`, formData);
   },
 };
 

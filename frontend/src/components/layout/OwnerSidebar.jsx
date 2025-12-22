@@ -7,7 +7,6 @@ const OwnerSidebar = () => {
     { path: "/owner/reservations", label: "예약 관리", icon: "📅" },
     { path: "/owner/reviews", label: "리뷰 관리", icon: "⭐" },
     { path: "/owner/coupons", label: "쿠폰 관리", icon: "🎫" },
-    { path: "/owner/settings", label: "설정", icon: "⚙️" },
     { path: "/owner/me", label: "내 정보", icon: "👤" },
   ];
 

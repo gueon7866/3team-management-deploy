@@ -38,8 +38,15 @@
       background: white;
       padding: 30px;
       border-radius: 8px;
-      max-width: 500px;
+      max-width: 700px;
       width: 90%;
+      max-height: 90vh;
+      overflow-y: auto;
+
+      h2 {
+        margin-bottom: 24px;
+        color: #333;
+      }
 
       .form-group {
         margin-bottom: 20px;
@@ -47,13 +54,89 @@
         label {
           display: block;
           margin-bottom: 8px;
+          font-weight: 500;
+          color: #333;
         }
 
-        input {
+        input[type="text"],
+        input[type="number"],
+        input[type="file"] {
           width: 100%;
           padding: 10px;
           border: 1px solid #ddd;
           border-radius: 5px;
+        }
+
+        input[type="number"] {
+          max-width: 200px;
+        }
+
+        .checkbox-group {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 16px;
+          margin-top: 8px;
+
+          .checkbox-label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            font-weight: normal;
+
+            input[type="checkbox"] {
+              width: auto;
+              cursor: pointer;
+            }
+
+            span {
+              user-select: none;
+            }
+          }
+        }
+
+        .image-preview-container {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 16px;
+          margin-top: 16px;
+
+          .image-preview-item {
+            position: relative;
+            width: 120px;
+            height: 120px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            overflow: hidden;
+
+            img {
+              width: 100%;
+              height: 100%;
+              object-fit: cover;
+            }
+
+            .remove-image-btn {
+              position: absolute;
+              top: 5px;
+              right: 5px;
+              width: 24px;
+              height: 24px;
+              border-radius: 50%;
+              background: rgba(0, 0, 0, 0.7);
+              color: white;
+              border: none;
+              cursor: pointer;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              font-size: 18px;
+              line-height: 1;
+
+              &:hover {
+                background: rgba(0, 0, 0, 0.9);
+              }
+            }
+          }
         }
       }
 
@@ -61,6 +144,36 @@
         display: flex;
         gap: 10px;
         justify-content: flex-end;
+        margin-top: 24px;
+        padding-top: 24px;
+        border-top: 1px solid #eee;
+
+        .btn {
+          padding: 10px 20px;
+          border: none;
+          border-radius: 5px;
+          cursor: pointer;
+          font-size: 14px;
+          font-weight: 500;
+
+          &.btn-primary {
+            background: #007bff;
+            color: white;
+
+            &:hover {
+              background: #0056b3;
+            }
+          }
+
+          &.btn-secondary {
+            background: #6c757d;
+            color: white;
+
+            &:hover {
+              background: #5a6268;
+            }
+          }
+        }
       }
     }
   }
@@ -95,6 +208,27 @@
           padding: 16px;
           color: #666;
         }
+      }
+
+      .hotel-thumbnail {
+        width: 80px;
+        height: 60px;
+        object-fit: cover;
+        border-radius: 4px;
+        border: 1px solid #ddd;
+      }
+
+      .hotel-thumbnail-placeholder {
+        width: 80px;
+        height: 60px;
+        background: #f0f0f0;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 11px;
+        color: #999;
       }
     }
   }

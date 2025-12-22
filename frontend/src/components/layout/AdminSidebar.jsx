@@ -7,7 +7,6 @@ const AdminSidebar = () => {
     { path: "/admin/users", label: "회원 관리", icon: "👥" },
     { path: "/admin/reviews", label: "리뷰 관리", icon: "⭐" },
     { path: "/admin/coupons", label: "쿠폰 관리", icon: "🎫" },
-    { path: "/admin/settings", label: "설정", icon: "⚙️" },
     { path: "/admin/me", label: "내 정보", icon: "👤" },
   ];
 
