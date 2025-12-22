@@ -184,6 +184,23 @@ export const rejectHotel = async (req, res) => {
   }
 };
 
+// ✅ 프론트가 owner 화면에서도 /api/hotel/admin/:id 로 호출해서 404가 났던 부분 대응
+export const getHotelById = async (req, res) => {
+  try {
+    const { hotelId } = req.params;
+
+    const ownerId =
+      req.user?.role === "owner" ? (req.user.id || req.user._id) : null;
+
+    const hotel = await hotelService.getHotelById(hotelId, ownerId);
+    return res.status(200).json(successResponse(hotel, "HOTEL_DETAIL", 200));
+  } catch (err) {
+    return res
+      .status(err.statusCode || 400)
+      .json(errorResponse(err.message, err.statusCode || 400));
+  }
+};
+
 // 호텔 이미지 업로드
 export const uploadHotelImages = async (req, res) => {
   try {

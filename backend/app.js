@@ -23,6 +23,8 @@ app.use(express.urlencoded({ extended: true }));
 
 // 라우트 등록
 registerRoutes(app);
+import dashboardRouter from "./dashboard/route.js";
+app.use("/api/dashboard", dashboardRouter);
 
 // 404 핸들러
 app.use((req, res, next) => {
