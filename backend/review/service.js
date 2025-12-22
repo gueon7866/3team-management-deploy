@@ -2,6 +2,54 @@
 import Review from "./model.js";
 import {Hotel} from "../hotel/model.js";
 
+// OWNER: 내 호텔의 모든 리뷰 목록
+export const getAllReviewsForOwner = async ({
+  ownerId,
+  page = 1,
+  limit = 20,
+}) => {
+  const hotels = await Hotel.find({ owner: ownerId }).select("_id");
+  const hotelIds = hotels.map((h) => h._id);
+
+  if (hotelIds.length === 0) {
+    const pageNumber = Number(page) || 1;
+    const limitNumber = Number(limit) || 20;
+
+    return {
+      items: [],
+      total: 0,
+      page: pageNumber,
+      limit: limitNumber,
+      totalPages: 0,
+    };
+  }
+
+  const filter = {
+    hotelId: { $in: hotelIds },
+  };
+
+  const pageNumber = Number(page) || 1;
+  const limitNumber = Number(limit) || 20;
+  const skip = (pageNumber - 1) * limitNumber;
+
+  const total = await Review.countDocuments(filter);
+
+  const items = await Review.find(filter)
+    .populate("userId", "name email")
+    .populate("hotelId", "name")
+    .sort({ createdAt: -1 })
+    .skip(skip)
+    .limit(limitNumber);
+
+  return {
+    items,
+    total,
+    page: pageNumber,
+    limit: limitNumber,
+    totalPages: Math.ceil(total / limitNumber),
+  };
+};
+
 // OWNER: 유저가 신고한 내 호텔 리뷰 목록
 export const getReportedReviewsForOwner = async ({
   ownerId,
