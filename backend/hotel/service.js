@@ -1,5 +1,35 @@
 // hotel/service.js
 import Hotel from "./model.js";
+import Room from "../room/model.js"; // ✅ Room 모델 경로가 이거라 가정 (네 레포 구조에 맞춰 필요시 수정)
+
+//
+// 공통 유틸: 호텔 목록에 최저 객실가(basePrice/minPrice) 붙이기
+//
+const attachMinPriceToHotels = async (hotels) => {
+  if (!hotels || hotels.length === 0) return hotels;
+
+  const hotelIds = hotels.map((h) => h._id);
+
+  // 호텔별 최저가 집계
+  const rows = await Room.aggregate([
+    { $match: { hotel: { $in: hotelIds } } },
+    { $group: { _id: "$hotel", minPrice: { $min: "$price" } } },
+  ]);
+
+  const minMap = new Map(rows.map((r) => [String(r._id), r.minPrice]));
+
+  // mongoose document -> plain object 변환 후 주입
+  return hotels.map((h) => {
+    const obj = typeof h.toObject === "function" ? h.toObject() : h;
+    const minPrice = minMap.get(String(obj._id)) ?? 0;
+
+    // ✅ 유저 프론트가 basePrice를 본다
+    obj.minPrice = minPrice;
+    obj.basePrice = minPrice;
+
+    return obj;
+  });
+};
 
 //
 // OWNER(사업자) 서비스
@@ -17,8 +47,11 @@ export const getHotelsByOwner = async (ownerId, options = {}) => {
     Hotel.countDocuments(filter),
   ]);
 
+  // ✅ 사업자 리스트도 최저가 붙이면 관리 화면에서도 바로 표시 가능
+  const enriched = await attachMinPriceToHotels(items);
+
   return {
-    items,
+    items: enriched,
     pagination: {
       page,
       limit,
@@ -45,8 +78,6 @@ export const createHotel = async (ownerId, data) => {
     throw err;
   }
 
-  const safeRating = Number.isFinite(Number(rating)) ? Number(rating) : 0;
-
   const hotel = await Hotel.create({
     name,
     city,
@@ -54,9 +85,9 @@ export const createHotel = async (ownerId, data) => {
     owner: ownerId,
     images,
     status: "pending",
-    rating: safeRating < 0 ? 0 : safeRating,
-    freebies: Array.isArray(freebies) ? freebies : [],
-    amenities: Array.isArray(amenities) ? amenities : [],
+    rating,
+    freebies,
+    amenities,
   });
 
   return hotel;
@@ -81,20 +112,15 @@ export const updateHotel = async (ownerId, hotelId, payload) => {
   if (payload.city !== undefined) hotel.city = payload.city;
   if (payload.address !== undefined) hotel.address = payload.address;
 
-  if (payload.rating !== undefined) {
-    const n = Number(payload.rating);
-    hotel.rating = Number.isFinite(n) ? (n < 0 ? 0 : n) : hotel.rating;
-  }
+  if (payload.rating !== undefined) hotel.rating = payload.rating;
   if (payload.freebies !== undefined) hotel.freebies = payload.freebies;
   if (payload.amenities !== undefined) hotel.amenities = payload.amenities;
 
-  // images는 전달된 배열을 "추가"하는 방식 유지
   if (payload.images !== undefined && Array.isArray(payload.images)) {
     hotel.images = [...(hotel.images || []), ...payload.images];
   }
 
-  const updated = await hotel.save();
-  return updated;
+  return await hotel.save();
 };
 
 //
@@ -120,8 +146,10 @@ export const getAllHotels = async (options = {}) => {
     Hotel.countDocuments(filter),
   ]);
 
+  const enriched = await attachMinPriceToHotels(items);
+
   return {
-    items,
+    items: enriched,
     pagination: {
       page,
       limit,
@@ -147,8 +175,10 @@ export const getPendingHotels = async (options = {}) => {
     Hotel.countDocuments(filter),
   ]);
 
+  const enriched = await attachMinPriceToHotels(items);
+
   return {
-    items,
+    items: enriched,
     pagination: {
       page,
       limit,
@@ -160,6 +190,7 @@ export const getPendingHotels = async (options = {}) => {
 
 export const approveHotel = async (hotelId) => {
   const hotel = await Hotel.findById(hotelId);
+
   if (!hotel) {
     const err = new Error("HOTEL_NOT_FOUND");
     err.statusCode = 404;
@@ -169,12 +200,12 @@ export const approveHotel = async (hotelId) => {
   if (hotel.rating < 0) hotel.rating = 0;
 
   hotel.status = "approved";
-  const updated = await hotel.save({ validateBeforeSave: true });
-  return updated;
+  return await hotel.save({ validateBeforeSave: true });
 };
 
 export const rejectHotel = async (hotelId) => {
   const hotel = await Hotel.findById(hotelId);
+
   if (!hotel) {
     const err = new Error("HOTEL_NOT_FOUND");
     err.statusCode = 404;
@@ -184,34 +215,34 @@ export const rejectHotel = async (hotelId) => {
   if (hotel.rating < 0) hotel.rating = 0;
 
   hotel.status = "rejected";
-  const updated = await hotel.save({ validateBeforeSave: true });
-  return updated;
+  return await hotel.save({ validateBeforeSave: true });
 };
 
-// ✅ 프론트가 호출하는 /api/hotel/admin/:hotelId 대응용 단건 조회
-// - admin: 아무 호텔이나 조회 가능
-// - owner: 본인 호텔만 조회 가능
-export const getHotelById = async (hotelId, ownerId = null) => {
-  const hotel = await Hotel.findById(hotelId).populate(
-    "owner",
-    "name email businessNumber"
-  );
+//
+// ✅ 유저(공개) 서비스: 승인된 호텔 목록
+// (이 함수가 네 컨트롤러/라우트에서 쓰이는 이름과 다를 수 있음)
+//
+export const getApprovedHotels = async (options = {}) => {
+  const page = Number(options.page) || 1;
+  const limit = Number(options.limit) || 20;
+  const skip = (page - 1) * limit;
 
-  if (!hotel) {
-    const err = new Error("HOTEL_NOT_FOUND");
-    err.statusCode = 404;
-    throw err;
-  }
+  const filter = { status: "approved" };
 
-  if (ownerId) {
-    const realOwnerId =
-      hotel.owner?._id?.toString?.() || hotel.owner?.toString?.();
-    if (realOwnerId && realOwnerId !== ownerId.toString()) {
-      const err = new Error("NO_PERMISSION");
-      err.statusCode = 403;
-      throw err;
-    }
-  }
+  const [items, total] = await Promise.all([
+    Hotel.find(filter).sort({ createdAt: -1 }).skip(skip).limit(limit),
+    Hotel.countDocuments(filter),
+  ]);
 
-  return hotel;
+  const enriched = await attachMinPriceToHotels(items);
+
+  return {
+    items: enriched,
+    pagination: {
+      page,
+      limit,
+      total,
+      totalPages: total > 0 ? Math.ceil(total / limit) : 0,
+    },
+  };
 };
