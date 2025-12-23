@@ -23,3 +23,4 @@ export const favoriteApi = {
 };
 
 export default favoriteApi;
+

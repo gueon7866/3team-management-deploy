@@ -24,15 +24,17 @@ const OwnerReviewListPage = () => {
   const loadReviews = async () => {
     try {
       setLoading(true);
-      const response = await reviewApi.getOwnerReportedReviews({
+      const response = await reviewApi.getOwnerReviews({
         page: pagination.page,
         limit: pagination.limit,
       });
-      setReviews(response.data.items || []);
+      // axiosClient 인터셉터가 response.data를 반환하므로, response는 { success, message, data } 구조
+      const reviewsData = response?.data || response;
+      setReviews(reviewsData.items || []);
       setPagination({
         ...pagination,
-        total: response.data.total || 0,
-        totalPages: response.data.totalPages || 0,
+        total: reviewsData.total || 0,
+        totalPages: reviewsData.totalPages || 0,
       });
     } catch (err) {
       setError(err.response?.data?.message || "리뷰 목록을 불러오는데 실패했습니다.");
@@ -63,7 +65,7 @@ const OwnerReviewListPage = () => {
   return (
     <div className="owner-review-list-page">
       <h1>리뷰 관리</h1>
-      <p className="page-description">유저가 신고한 리뷰를 확인하고 관리자에게 이관할 수 있습니다.</p>
+      <p className="page-description">내 호텔에 대한 모든 리뷰를 확인하고 관리할 수 있습니다.</p>
 
       {error && <div className="error-message">{error}</div>}
 
@@ -83,7 +85,7 @@ const OwnerReviewListPage = () => {
             {reviews.length === 0 ? (
               <tr>
                 <td colSpan="6" style={{ textAlign: "center", padding: "40px" }}>
-                  신고된 리뷰가 없습니다.
+                  등록된 리뷰가 없습니다.
                 </td>
               </tr>
             ) : (

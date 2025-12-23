@@ -1,6 +1,11 @@
 import axiosClient from "./axiosClient";
 
 export const reviewApi = {
+  // 사업자: 내 호텔의 모든 리뷰 목록
+  getOwnerReviews: async (params = {}) => {
+    return await axiosClient.get("/reviews/owner", { params });
+  },
+
   // 사업자: 유저가 신고한 내 호텔 리뷰 목록
   getOwnerReportedReviews: async (params = {}) => {
     return await axiosClient.get("/reviews/owner/reported", { params });
