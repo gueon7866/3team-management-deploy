@@ -371,7 +371,7 @@ const AdminHotelDetailPage = () => {
                             height: "60px",
                             objectFit: "cover",
                             borderRadius: "4px",
-                            border: "1px solid "#ddd",
+                            border: "1px solid #ddd",
                           }}
                           onError={(e) => {
                             e.target.style.display = "none";
@@ -383,7 +383,7 @@ const AdminHotelDetailPage = () => {
                             width: "80px",
                             height: "60px",
                             background: "#f0f0f0",
-                            border: "1px solid "#ddd",
+                            border: "1px solid #ddd",
                             borderRadius: "4px",
                             display: "flex",
                             alignItems: "center",
