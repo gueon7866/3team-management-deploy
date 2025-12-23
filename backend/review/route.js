@@ -3,6 +3,7 @@ import { Router } from "express";
 import { verifyToken } from "../common/authmiddleware.js";
 import requireRole from "../common/rolemiddleware.js";
 import {
+  getOwnerReviews,
   getOwnerReportedReviews,
   escalateReview,
   getAdminReportedReviews,
@@ -11,6 +12,18 @@ import {
 } from "./controller.js";
 
 const router = Router();
+
+// 디버깅: 라우트 등록 확인
+console.log("📝 Review routes registered:");
+console.log("   GET /owner - getOwnerReviews");
+
+// OWNER: 내 호텔의 모든 리뷰 목록
+router.get(
+  "/owner",
+  verifyToken,
+  requireRole("owner"),
+  getOwnerReviews
+);
 
 // OWNER: 유저가 신고한 내 호텔 리뷰 목록
 router.get(

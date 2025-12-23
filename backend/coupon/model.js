@@ -40,6 +40,12 @@ const couponSchema = new mongoose.Schema(
       required: false,
       default: null,
     },
+    // 사업자 번호 (owner와 함께 저장, 검색 편의용)
+    ownerBusinessNumber: {
+      type: String,
+      trim: true,
+      default: null,
+    },
     isActive: {
       type: Boolean,
       default: true,

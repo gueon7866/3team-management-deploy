@@ -8,6 +8,7 @@ import dashboardRoute from "../dashboard/route.js";
 import reviewRoute from "../review/route.js";
 import userRoute from "../user/route.js";
 const registerRoutes = (app) => {
+  console.log("🔧 Registering routes...");
   app.use("/api/auth", authRoute);
   app.use("/api/hotel", hotelRoute);
   app.use("/api/reservation", reservationRoute);
@@ -15,7 +16,14 @@ const registerRoutes = (app) => {
   app.use("/api/coupons", couponRoute);
   app.use("/api/dashboard", dashboardRoute);
   app.use("/api/reviews", reviewRoute);
-  app.use("/api/user/", userRoute);
+  app.use("/api/user", userRoute);
+  
+  // 디버깅: 등록된 라우트 확인
+  console.log("✅ All routes registered:");
+  console.log("  - /api/reviews (review routes)");
+  console.log("  - /api/dashboard (dashboard routes)");
+  console.log("  - /api/hotel (hotel routes)");
+  console.log("  - /api/user (user routes)");
 };
 
 export default registerRoutes;

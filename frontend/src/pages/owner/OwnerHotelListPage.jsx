@@ -306,12 +306,21 @@ const OwnerHotelListPage = () => {
                   <td>{new Date(hotel.createdAt).toLocaleDateString()}</td>
                   <td>
                     {hotel.status === "approved" && (
-                      <button
-                        className="btn btn-primary"
-                        onClick={() => navigate(`/owner/hotels/${hotel.id || hotel._id}`)}
-                      >
-                        관리
-                      </button>
+                      <>
+                        <button
+                          className="btn btn-primary"
+                          onClick={() => navigate(`/owner/hotels/${hotel.id || hotel._id}`)}
+                          style={{ marginRight: "8px" }}
+                        >
+                          관리
+                        </button>
+                        <button
+                          className="btn btn-secondary"
+                          onClick={() => navigate(`/owner/hotels/${hotel.id || hotel._id}/edit`)}
+                        >
+                          수정
+                        </button>
+                      </>
                     )}
                   </td>
                 </tr>

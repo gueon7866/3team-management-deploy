@@ -13,6 +13,7 @@ import AdminUserListPage from "../pages/admin/AdminUserListPage";
 import AdminReviewListPage from "../pages/admin/AdminReviewListPage";
 import AdminCouponListPage from "../pages/admin/AdminCouponListPage";
 import AdminCouponCreatePage from "../pages/admin/AdminCouponCreatePage";
+import AdminCouponEditPage from "../pages/admin/AdminCouponEditPage";
 import AdminMyProfilePage from "../pages/admin/AdminMyProfilePage";
 
 // Owner Pages
@@ -20,6 +21,7 @@ import OwnerLayout from "../components/layout/OwnerLayout";
 import OwnerDashboardPage from "../pages/owner/OwnerDashboardPage";
 import OwnerHotelListPage from "../pages/owner/OwnerHotelListPage";
 import OwnerHotelDetailPage from "../pages/owner/OwnerHotelDetailPage";
+import OwnerHotelEditPage from "../pages/owner/OwnerHotelEditPage";
 import OwnerReservationListPage from "../pages/owner/OwnerReservationListPage";
 import OwnerReviewListPage from "../pages/owner/OwnerReviewListPage";
 import OwnerCouponListPage from "../pages/owner/OwnerCouponListPage";
@@ -83,6 +85,10 @@ export const routes = [
         element: <AdminCouponCreatePage />,
       },
       {
+        path: "coupons/:couponId/edit",
+        element: <AdminCouponEditPage />,
+      },
+      {
         path: "me",
         element: <AdminMyProfilePage />,
       },
@@ -111,6 +117,10 @@ export const routes = [
       {
         path: "hotels/:hotelId",
         element: <OwnerHotelDetailPage />,
+      },
+      {
+        path: "hotels/:hotelId/edit",
+        element: <OwnerHotelEditPage />,
       },
       {
         path: "reservations",

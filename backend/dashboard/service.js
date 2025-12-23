@@ -57,7 +57,10 @@ export const getRevenueTrend = async (granularity = "day", ownerHotelIds = null)
 
   const match = {
     status: "completed",
-    updatedAt: { $gte: since },
+    $or: [
+      { updatedAt: { $gte: since } },
+      { createdAt: { $gte: since } }
+    ],
   };
 
   if (ownerHotelIds && ownerHotelIds.length > 0) {
@@ -211,16 +214,25 @@ export const getOwnerDashboardSummary = async (ownerId) => {
     }),
   ]);
 
-  // 5) 최근 30일 매출 (completed 예약만, day 단위 집계 중 마지막 값 사용)
+  // 5) 최근 30일 매출 (completed 예약만)
   const since = new Date();
   since.setDate(since.getDate() - 30);
 
+  // ObjectId 배열을 문자열 배열로 변환 (필요한 경우)
+  const hotelIdStrings = hotelIds.map(id => 
+    typeof id === 'string' ? id : id.toString()
+  );
+
+  // completed 예약 중에서 최근 30일 내에 완료된 것들 (updatedAt 또는 createdAt 기준)
   const revenueAgg = await Reservation.aggregate([
     {
       $match: {
         hotelId: { $in: hotelIds },
         status: "completed",
-        updatedAt: { $gte: since },
+        $or: [
+          { updatedAt: { $gte: since } },
+          { createdAt: { $gte: since } }
+        ],
       },
     },
     {
@@ -232,8 +244,17 @@ export const getOwnerDashboardSummary = async (ownerId) => {
     },
   ]);
 
-  const last30DaysTotal = revenueAgg.length > 0 ? revenueAgg[0].total : 0;
-  const last30DaysCount = revenueAgg.length > 0 ? revenueAgg[0].count : 0;
+  const last30DaysTotal = revenueAgg.length > 0 ? (revenueAgg[0].total || 0) : 0;
+  const last30DaysCount = revenueAgg.length > 0 ? (revenueAgg[0].count || 0) : 0;
+
+  console.log("사업자 대시보드 매출 집계:", {
+    ownerId,
+    hotelIds: hotelIds.length,
+    since,
+    revenueAgg,
+    last30DaysTotal,
+    last30DaysCount,
+  });
 
   return {
     hotels: {

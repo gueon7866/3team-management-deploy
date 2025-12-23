@@ -13,6 +13,7 @@ const OwnerHotelDetailPage = () => {
   const [rooms, setRooms] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showRoomForm, setShowRoomForm] = useState(false);
+  const [editingRoom, setEditingRoom] = useState(null); // 수정 중인 객실
   const [roomFormData, setRoomFormData] = useState({
     name: "",
     type: "",
@@ -23,6 +24,7 @@ const OwnerHotelDetailPage = () => {
   });
   const [roomImages, setRoomImages] = useState([]);
   const [roomImagePreviews, setRoomImagePreviews] = useState([]);
+  const [existingRoomImages, setExistingRoomImages] = useState([]); // 기존 이미지 URL
 
   useEffect(() => {
     loadData();
@@ -50,16 +52,60 @@ const OwnerHotelDetailPage = () => {
   };
 
   const handleRoomImageChange = (e) => {
-    const files = Array.from(e.target.files).slice(0, 10); // 최대 10개
-    setRoomImages(files);
-    const previews = files.map((file) => URL.createObjectURL(file));
-    setRoomImagePreviews(previews);
+    const files = Array.from(e.target.files);
+    const remainingSlots = 10 - roomImagePreviews.length;
+    const newFiles = files.slice(0, remainingSlots);
+    
+    if (newFiles.length === 0) return;
+    
+    setRoomImages((prev) => [...prev, ...newFiles]);
+    const previews = newFiles.map((file) => URL.createObjectURL(file));
+    setRoomImagePreviews((prev) => [...prev, ...previews]);
   };
 
   const removeRoomImagePreview = (index) => {
-    URL.revokeObjectURL(roomImagePreviews[index]);
-    setRoomImagePreviews((prev) => prev.filter((_, i) => i !== index));
-    setRoomImages((prev) => prev.filter((_, i) => i !== index));
+    const existingCount = existingRoomImages.length;
+    
+    if (index < existingCount) {
+      // 기존 이미지 제거
+      setExistingRoomImages((prev) => prev.filter((_, i) => i !== index));
+      setRoomImagePreviews((prev) => prev.filter((_, i) => i !== index));
+    } else {
+      // 새 이미지 제거
+      const newIndex = index - existingCount;
+      const fileToRemove = roomImages[newIndex];
+      if (fileToRemove && fileToRemove instanceof File) {
+        URL.revokeObjectURL(roomImagePreviews[index]);
+      }
+      setRoomImages((prev) => prev.filter((_, i) => i !== newIndex));
+      setRoomImagePreviews((prev) => prev.filter((_, i) => i !== index));
+    }
+  };
+
+  const handleEditRoom = (room) => {
+    setEditingRoom(room);
+    setRoomFormData({
+      name: room.name || "",
+      type: room.type || "",
+      price: room.price?.toString() || "",
+      capacity: room.capacity?.toString() || "",
+      inventory: room.inventory?.toString() || "",
+      amenities: room.amenities || [],
+    });
+    const roomImages = room.images || [];
+    setExistingRoomImages(roomImages);
+    setRoomImagePreviews(roomImages);
+    setRoomImages([]);
+    setShowRoomForm(true);
+  };
+
+  const resetRoomForm = () => {
+    setEditingRoom(null);
+    setRoomFormData({ name: "", type: "", price: "", capacity: "", inventory: "", amenities: [] });
+    setRoomImages([]);
+    setRoomImagePreviews([]);
+    setExistingRoomImages([]);
+    setShowRoomForm(false);
   };
 
   const handleCreateRoom = async (e) => {
@@ -84,13 +130,47 @@ const OwnerHotelDetailPage = () => {
 
       await roomApi.createRoom(hotelId, submitData);
       alert("객실이 등록되었습니다.");
-      setShowRoomForm(false);
-      setRoomFormData({ name: "", type: "", price: "", capacity: "", inventory: "", amenities: [] });
-      setRoomImages([]);
-      setRoomImagePreviews([]);
+      resetRoomForm();
       loadData();
     } catch (err) {
       alert(err.response?.data?.message || "객실 등록에 실패했습니다.");
+    }
+  };
+
+  const handleUpdateRoom = async (e) => {
+    e.preventDefault();
+    if (!editingRoom) return;
+
+    try {
+      const submitData = new FormData();
+      submitData.append("name", roomFormData.name);
+      submitData.append("type", roomFormData.type);
+      submitData.append("price", roomFormData.price.toString());
+      submitData.append("capacity", roomFormData.capacity.toString());
+      submitData.append("inventory", roomFormData.inventory.toString());
+
+      if (roomFormData.amenities && roomFormData.amenities.length > 0) {
+        roomFormData.amenities.forEach((amenity) => {
+          submitData.append("amenities", amenity);
+        });
+      }
+
+      // 기존 이미지 URL 추가
+      existingRoomImages.forEach((imageUrl) => {
+        submitData.append("images", imageUrl);
+      });
+
+      // 새로 업로드할 이미지 파일 추가
+      roomImages.forEach((image) => {
+        submitData.append("images", image);
+      });
+
+      await roomApi.updateRoom(editingRoom.id || editingRoom._id, submitData);
+      alert("객실이 수정되었습니다.");
+      resetRoomForm();
+      loadData();
+    } catch (err) {
+      alert(err.response?.data?.message || "객실 수정에 실패했습니다.");
     }
   };
 
@@ -116,6 +196,12 @@ const OwnerHotelDetailPage = () => {
           뒤로
         </button>
         <h1>{hotel.name}</h1>
+        <button 
+          className="btn btn-primary" 
+          onClick={() => navigate(`/owner/hotels/${hotelId}/edit`)}
+        >
+          호텔 수정
+        </button>
       </div>
 
       {hotel.images && hotel.images.length > 0 && (
@@ -173,15 +259,21 @@ const OwnerHotelDetailPage = () => {
       <div className="rooms-section">
         <div className="section-header">
           <h2>객실 관리</h2>
-          <button className="btn btn-primary" onClick={() => setShowRoomForm(true)}>
+          <button 
+            className="btn btn-primary" 
+            onClick={() => {
+              resetRoomForm();
+              setShowRoomForm(true);
+            }}
+          >
             객실 추가
           </button>
         </div>
 
         {showRoomForm && (
           <div className="room-form">
-            <h3>객실 등록</h3>
-            <form onSubmit={handleCreateRoom}>
+            <h3>{editingRoom ? "객실 수정" : "객실 등록"}</h3>
+            <form onSubmit={editingRoom ? handleUpdateRoom : handleCreateRoom}>
               <div className="form-group">
                 <label>객실명</label>
                 <input
@@ -307,17 +399,12 @@ const OwnerHotelDetailPage = () => {
                 <button
                   type="button"
                   className="btn btn-secondary"
-                  onClick={() => {
-                    setShowRoomForm(false);
-                    setRoomFormData({ name: "", type: "", price: "", capacity: "", inventory: "", amenities: [] });
-                    setRoomImages([]);
-                    setRoomImagePreviews([]);
-                  }}
+                  onClick={resetRoomForm}
                 >
                   취소
                 </button>
                 <button type="submit" className="btn btn-primary">
-                  등록
+                  {editingRoom ? "수정" : "등록"}
                 </button>
               </div>
             </form>
@@ -367,6 +454,13 @@ const OwnerHotelDetailPage = () => {
                     <td>{room.capacity}명</td>
                     <td>{room.inventory}개</td>
                     <td>
+                      <button
+                        className="btn btn-primary"
+                        onClick={() => handleEditRoom(room)}
+                        style={{ marginRight: "8px" }}
+                      >
+                        수정
+                      </button>
                       <button
                         className="btn btn-danger"
                         onClick={() => handleDeleteRoom(room.id || room._id)}

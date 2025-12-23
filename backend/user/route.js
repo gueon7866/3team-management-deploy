@@ -7,7 +7,8 @@ import {
   getUsers,
   updateUserByAdmin,
 } from "./controller.js";
-import { verifyToken, requireRole } from "../common/authmiddleware.js";
+import { verifyToken } from "../common/authmiddleware.js";
+import requireRole from "../common/rolemiddleware.js";
 import { s3ImageUpload } from "../middlewares/s3Upload.js";
 import optionalMulter from "../middlewares/optionalMulter.js";
 

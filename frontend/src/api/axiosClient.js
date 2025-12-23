@@ -1,7 +1,19 @@
 import axios from "axios";
 
+// 개발 환경에서는 항상 상대 경로(/api)를 사용하여 Vite 프록시 활용
+// 프로덕션 환경에서만 환경 변수 사용
+const getBaseURL = () => {
+  // 개발 환경 (Vite dev server)
+  if (import.meta.env.DEV) {
+    return "/api";
+  }
+  
+  // 프로덕션 환경
+  return import.meta.env.VITE_API_BASE_URL || "/api";
+};
+
 const axiosClient = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || "http://localhost:3000/api",
+  baseURL: getBaseURL(),
   timeout: 10000,
   headers: {
     "Content-Type": "application/json",

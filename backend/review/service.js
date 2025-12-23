@@ -1,6 +1,6 @@
 // ⬇⬇ review/service.js 전체를 이걸로 교체 ⬇⬇
 import Review from "./model.js";
-import {Hotel} from "../hotel/model.js";
+import Hotel from "../hotel/model.js";
 
 // OWNER: 내 호텔의 모든 리뷰 목록
 export const getAllReviewsForOwner = async ({

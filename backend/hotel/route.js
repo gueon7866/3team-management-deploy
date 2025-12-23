@@ -34,7 +34,8 @@ router.post(
 router.patch(
   "/owner/:hotelId",
   verifyToken,
-  requireRole("owner"),
+  requireRole("owner", "admin"),
+  optionalMulter(s3ImageUpload("hotel").array("images", 10)),
   updateHotel
 );
 

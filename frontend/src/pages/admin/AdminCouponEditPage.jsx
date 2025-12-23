@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import AdminCouponForm from "../../components/admin/coupons/AdminCouponForm";
+import couponApi from "../../api/couponApi";
 import Loader from "../../components/common/Loader";
 import ErrorMessage from "../../components/common/ErrorMessage";
 
@@ -18,10 +19,12 @@ const AdminCouponEditPage = () => {
   const fetchCoupon = async () => {
     try {
       setLoading(true);
-      // TODO: API 연결
-      setCoupon({});
+      const response = await couponApi.getCouponById(couponId);
+      // axiosClient 인터셉터가 이미 response.data를 반환하므로, response는 { success, message, data } 구조
+      const couponData = response?.data || response;
+      setCoupon(couponData);
     } catch (err) {
-      setError(err.message || "데이터를 불러오는데 실패했습니다.");
+      setError(err.response?.data?.message || err.message || "데이터를 불러오는데 실패했습니다.");
     } finally {
       setLoading(false);
     }
@@ -29,11 +32,13 @@ const AdminCouponEditPage = () => {
 
   const handleSubmit = async (formData) => {
     try {
-      // TODO: API 연결
+      await couponApi.updateCoupon(couponId, formData);
       alert("쿠폰이 수정되었습니다.");
       navigate("/admin/coupons");
     } catch (err) {
-      alert(err.message || "수정에 실패했습니다.");
+      const errorMessage = err.response?.data?.message || err.message || "수정에 실패했습니다.";
+      alert(errorMessage);
+      throw err; // AdminCouponForm에서 에러 처리하도록
     }
   };
 

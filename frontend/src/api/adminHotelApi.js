@@ -16,7 +16,8 @@ export const adminHotelApi = {
   // 관리자: 호텔 단일 조회
   getHotelById: async (hotelId) => {
     const response = await axiosClient.get(`/hotel/admin/${hotelId}`);
-    return response.data;
+    // axiosClient 인터셉터가 이미 response.data를 반환하므로, response는 { success, message, data } 구조
+    return response?.data || response;
   },
 
   // 관리자: 호텔 생성 (owner API 사용, admin도 사용 가능)

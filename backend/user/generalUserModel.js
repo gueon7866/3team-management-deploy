@@ -28,6 +28,11 @@ const generalUserSchema = new mongoose.Schema(
       type: String,
       default: "user",
     },
+    // 계정 상태
+    isBlocked: {
+      type: Boolean,
+      default: false,
+    },
   },
   {
     collection: "users", // 일반 회원이 저장된 컬렉션 이름

@@ -30,11 +30,11 @@ const OwnerReviewListPage = () => {
       });
       // axiosClient 인터셉터가 response.data를 반환하므로, response는 { success, message, data } 구조
       const reviewsData = response?.data || response;
-      setReviews(reviewsData.items || []);
+      setReviews(reviewsData?.items || []);
       setPagination({
         ...pagination,
-        total: reviewsData.total || 0,
-        totalPages: reviewsData.totalPages || 0,
+        total: reviewsData?.total || 0,
+        totalPages: reviewsData?.totalPages || 0,
       });
     } catch (err) {
       setError(err.response?.data?.message || "리뷰 목록을 불러오는데 실패했습니다.");

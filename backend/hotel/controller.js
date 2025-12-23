@@ -99,18 +99,29 @@ export const createHotel = async (req, res) => {
 
 export const updateHotel = async (req, res) => {
   try {
-    const ownerId = req.user.id || req.user._id;
+    // 관리자는 ownerId 체크를 건너뛰도록 null 전달
+    const ownerId = req.user?.role === "admin" ? null : (req.user.id || req.user._id);
     const { hotelId } = req.params;
 
+    const uploadedImages = req.files?.map((f) => f.location) || [];
     const body = { ...req.body };
 
     const freebies = normalizeArrayField(body.freebies);
     const amenities = normalizeArrayField(body.amenities);
-    const images = normalizeArrayField(body.images);
+    const imagesFromBody = normalizeArrayField(body.images);
 
     if (freebies !== undefined) body.freebies = freebies;
     if (amenities !== undefined) body.amenities = amenities;
-    if (images !== undefined) body.images = images;
+
+    // 이미지 처리: FormData에서 전송된 기존 이미지 URL + 새로 업로드된 이미지
+    if (uploadedImages.length > 0) {
+      body.images = imagesFromBody
+        ? [...imagesFromBody, ...uploadedImages]
+        : uploadedImages;
+    } else if (imagesFromBody !== undefined) {
+      // 기존 이미지만 업데이트 (새 파일 없음)
+      body.images = imagesFromBody;
+    }
 
     const rating = normalizeNumberField(body.rating);
     if (rating !== undefined) body.rating = rating;
@@ -189,12 +200,17 @@ export const getHotelById = async (req, res) => {
   try {
     const { hotelId } = req.params;
 
+    if (!hotelId) {
+      return res.status(400).json(errorResponse("HOTEL_ID_REQUIRED", 400));
+    }
+
     const ownerId =
       req.user?.role === "owner" ? (req.user.id || req.user._id) : null;
 
     const hotel = await hotelService.getHotelById(hotelId, ownerId);
     return res.status(200).json(successResponse(hotel, "HOTEL_DETAIL", 200));
   } catch (err) {
+    console.error("getHotelById error:", err);
     return res
       .status(err.statusCode || 400)
       .json(errorResponse(err.message, err.statusCode || 400));

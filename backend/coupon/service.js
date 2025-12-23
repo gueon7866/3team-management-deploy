@@ -131,6 +131,97 @@ export const getCouponsForAdmin = async ({
   };
 };
 
+// ADMIN: 쿠폰 조회 (단일)
+export const getCouponById = async (couponId) => {
+  const coupon = await Coupon.findById(couponId)
+    .populate("owner", "name email businessNumber")
+    .populate("createdBy", "name email");
+  
+  if (!coupon) {
+    const err = new Error("COUPON_NOT_FOUND");
+    err.statusCode = 404;
+    throw err;
+  }
+
+  return coupon;
+};
+
+// ADMIN: 쿠폰 수정
+export const updateCoupon = async (couponId, data, adminId) => {
+  const coupon = await Coupon.findById(couponId);
+  if (!coupon) {
+    const err = new Error("COUPON_NOT_FOUND");
+    err.statusCode = 404;
+    throw err;
+  }
+
+  const {
+    name,
+    code,
+    discountAmount,
+    minOrderAmount,
+    validFrom,
+    validTo,
+    businessNumber,
+  } = data;
+
+  // 코드 변경 시 중복 체크
+  if (code && code.toUpperCase() !== coupon.code) {
+    const existing = await Coupon.findOne({ code: code.toUpperCase() });
+    if (existing) {
+      const err = new Error("COUPON_CODE_DUPLICATED");
+      err.statusCode = 400;
+      throw err;
+    }
+    coupon.code = code.toUpperCase();
+  }
+
+  // owner 변경 처리
+  if (businessNumber !== undefined) {
+    if (businessNumber && businessNumber.trim() !== "") {
+      const owner = await User.findOne({ businessNumber: businessNumber.trim() });
+      if (!owner) {
+        const err = new Error("OWNER_NOT_FOUND");
+        err.statusCode = 404;
+        throw err;
+      }
+      if (owner.role !== "owner") {
+        const err = new Error("USER_IS_NOT_OWNER");
+        err.statusCode = 400;
+        throw err;
+      }
+      coupon.owner = owner._id;
+      coupon.ownerBusinessNumber = owner.businessNumber;
+    } else {
+      // businessNumber가 비어있으면 전역 쿠폰으로 변경
+      coupon.owner = null;
+      coupon.ownerBusinessNumber = null;
+    }
+  }
+
+  // 필드 업데이트
+  if (name !== undefined) coupon.name = name;
+  if (discountAmount !== undefined) coupon.discountAmount = discountAmount;
+  if (minOrderAmount !== undefined) coupon.minOrderAmount = minOrderAmount || 0;
+  if (validFrom !== undefined) coupon.validFrom = validFrom;
+  if (validTo !== undefined) coupon.validTo = validTo;
+
+  return await coupon.save();
+};
+
+// ADMIN: 쿠폰 삭제
+export const deleteCoupon = async (couponId) => {
+  const coupon = await Coupon.findById(couponId);
+  if (!coupon) {
+    const err = new Error("COUPON_NOT_FOUND");
+    err.statusCode = 404;
+    throw err;
+  }
+
+  await Coupon.findByIdAndDelete(couponId);
+  return { message: "COUPON_DELETED" };
+};
+
 // ADMIN: 쿠폰 비활성화
 export const deactivateCoupon = async (couponId) => {
   const coupon = await Coupon.findById(couponId);

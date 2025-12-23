@@ -7,6 +7,7 @@ import {
   getAdminDashboard,
   getOwnerDashboard,
   getAdminRevenueTrend,
+  getOwnerRevenueTrend,
 } from "./controller.js";
 
 const router = Router();
@@ -32,6 +33,14 @@ router.get(
   verifyToken,
   requireRole("owner"),
   getOwnerDashboard
+);
+
+// 사업자 매출 추세 데이터
+router.get(
+  "/owner/revenue-trend",
+  verifyToken,
+  requireRole("owner"),
+  getOwnerRevenueTrend
 );
 
 export default router;

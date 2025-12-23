@@ -102,11 +102,24 @@ export const updateHotel = async (ownerId, hotelId, payload) => {
     throw err;
   }
 
-  if (hotel.owner.toString() !== ownerId.toString()) {
+  // ownerId가 null이면 관리자로 간주하여 권한 체크 건너뛰기
+  if (ownerId !== null && hotel.owner.toString() !== ownerId.toString()) {
     const err = new Error("NO_PERMISSION");
     err.statusCode = 403;
     throw err;
   }
+
+  // 디버깅: 업데이트 전 데이터
+  console.log("🔧 updateHotel - Before update:", {
+    hotelId,
+    currentName: hotel.name,
+    currentCity: hotel.city,
+    payloadName: payload.name,
+    payloadCity: payload.city,
+    payloadFreebies: payload.freebies,
+    payloadAmenities: payload.amenities,
+    payloadImages: payload.images,
+  });
 
   if (payload.name !== undefined) hotel.name = payload.name;
   if (payload.city !== undefined) hotel.city = payload.city;
@@ -116,11 +129,24 @@ export const updateHotel = async (ownerId, hotelId, payload) => {
   if (payload.freebies !== undefined) hotel.freebies = payload.freebies;
   if (payload.amenities !== undefined) hotel.amenities = payload.amenities;
 
+  // 이미지 교체 (추가가 아닌 완전 교체)
   if (payload.images !== undefined && Array.isArray(payload.images)) {
-    hotel.images = [...(hotel.images || []), ...payload.images];
+    hotel.images = payload.images;
   }
 
-  return await hotel.save();
+  const savedHotel = await hotel.save();
+  
+  // 디버깅: 업데이트 후 데이터
+  console.log("✅ updateHotel - After update:", {
+    hotelId,
+    savedName: savedHotel.name,
+    savedCity: savedHotel.city,
+    savedFreebies: savedHotel.freebies,
+    savedAmenities: savedHotel.amenities,
+    savedImages: savedHotel.images,
+  });
+
+  return savedHotel;
 };
 
 //
@@ -245,4 +271,104 @@ export const getApprovedHotels = async (options = {}) => {
       totalPages: total > 0 ? Math.ceil(total / limit) : 0,
     },
   };
+};
+
+// 공개 API: 호텔 목록 조회 (도시, 인원 필터링 지원)
+export const listHotels = async ({ city, guests }) => {
+  const query = { status: "approved" };
+  if (city) {
+    // 정규식을 사용해 부분 매칭 지원
+    const regex = new RegExp(city, "i");
+    query.city = regex;
+  }
+
+  if (guests) {
+    const rooms = await Room.find({
+      capacity: { $gte: Number(guests) },
+      status: "active",
+    }).distinct("hotel");
+    query._id = { $in: rooms };
+  }
+
+  const hotels = await Hotel.find(query).sort({ createdAt: -1 });
+  if (!hotels.length) return [];
+
+  // 최소 객실 가격 계산
+  const enriched = await attachMinPriceToHotels(hotels);
+  return enriched;
+};
+
+// 호텔 상세 조회 (공개/인증 모두 사용)
+export const getHotelDetail = async (id, { checkIn, checkOut, userId } = {}) => {
+  const hotel = await Hotel.findById(id);
+  if (!hotel) {
+    const err = new Error("HOTEL_NOT_FOUND");
+    err.statusCode = 404;
+    throw err;
+  }
+
+  // 객실 목록은 roomService에서 가져옴
+  const roomService = await import("../room/service.js");
+  const rooms = await roomService.getRoomsByHotel(null, id, "admin"); // 관리자 권한으로 조회
+
+  // 리뷰는 reviewService에서 가져옴
+  const reviewModel = await import("../review/model.js");
+  const reviews = await reviewModel.Review.find({ hotelId: id })
+    .populate("userId", "name")
+    .sort({ createdAt: -1 });
+
+  // 찜하기 여부는 favoriteService에서 가져옴
+  let isFavorite = false;
+  if (userId) {
+    const favoriteModel = await import("../favorite/model.js");
+    const fav = await favoriteModel.Favorite.findOne({ userId, hotelId: id }).select("_id");
+    isFavorite = !!fav;
+  }
+
+  // 최소 객실 가격 추가
+  const enriched = await attachMinPriceToHotels([hotel]);
+  const hotelWithPrice = enriched[0] || hotel.toObject();
+
+  return { hotel: hotelWithPrice, rooms, reviews, isFavorite };
+};
+
+// 호텔별 객실 목록 조회
+export const listRoomsByHotel = async (id, { checkIn, checkOut } = {}) => {
+  const { getRoomsByHotel } = await import("../room/service.js");
+  return getRoomsByHotel(null, id, "admin");
+};
+
+// 호텔 단일 조회 (관리자/사업자용)
+export const getHotelById = async (hotelId, ownerId = null) => {
+  if (!hotelId) {
+    const err = new Error("HOTEL_ID_REQUIRED");
+    err.statusCode = 400;
+    throw err;
+  }
+
+  const hotel = await Hotel.findById(hotelId)
+    .populate("owner", "name email businessNumber");
+
+  if (!hotel) {
+    const err = new Error("HOTEL_NOT_FOUND");
+    err.statusCode = 404;
+    throw err;
+  }
+
+  // 사업자가 자신의 호텔만 조회할 수 있도록 권한 체크
+  if (ownerId) {
+    // owner가 populate된 경우와 아닌 경우 모두 처리
+    const hotelOwnerId = hotel.owner?._id?.toString() || hotel.owner?.toString() || hotel.owner?.id?.toString();
+    const requestOwnerId = ownerId.toString();
+    
+    if (hotelOwnerId && hotelOwnerId !== requestOwnerId) {
+      const err = new Error("NO_PERMISSION");
+      err.statusCode = 403;
+      throw err;
+    }
+  }
+
+  // 최소 객실 가격 추가
+  const enriched = await attachMinPriceToHotels([hotel]);
+  return enriched[0] || hotel.toObject();
 };

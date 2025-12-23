@@ -8,16 +8,28 @@ const OwnerChartArea = ({
   trendType,
   onTrendTypeChange,
 }) => {
+  // 디버깅: 전달받은 props 확인
+  console.log("OwnerChartArea props:", {
+    summaryRevenue,
+    reservations,
+    trend,
+    trendType,
+  });
+
   const totalRevenue = summaryRevenue?.last30DaysTotal || 0;
   const totalCount = summaryRevenue?.last30DaysCount || 0;
   const completedCount = reservations?.completed || 0;
 
   const avgPerReservation = totalCount ? totalRevenue / totalCount : 0;
 
-  const maxValue = Math.max(totalRevenue, avgPerReservation, completedCount || 1);
+  // 최소 높이를 보장하기 위해 최소값을 1로 설정
+  const maxValue = Math.max(totalRevenue, avgPerReservation, completedCount, 1);
 
-  const toHeight = (value) =>
-    maxValue === 0 ? 0 : Math.round((value / maxValue) * 100);
+  const toHeight = (value) => {
+    if (maxValue === 0 || value === 0) return 8; // 최소 8% 높이로 표시 (시각적으로 보이도록)
+    const calculated = Math.round((value / maxValue) * 100);
+    return Math.max(8, calculated); // 최소 8% 보장
+  };
 
   const summaryBars = [
     {
@@ -45,11 +57,14 @@ const OwnerChartArea = ({
 
   const maxTrendValue =
     trend && trend.length
-      ? Math.max(...trend.map((d) => d.total || 0))
-      : 0;
+      ? Math.max(...trend.map((d) => d.total || 0), 1)
+      : 1;
 
-  const toTrendHeight = (value) =>
-    maxTrendValue === 0 ? 0 : Math.round((value / maxTrendValue) * 100);
+  const toTrendHeight = (value) => {
+    if (maxTrendValue === 0 || value === 0) return 8; // 최소 8% 높이로 표시 (시각적으로 보이도록)
+    const calculated = Math.round((value / maxTrendValue) * 100);
+    return Math.max(8, calculated); // 최소 8% 보장
+  };
 
   const typeLabel =
     trendType === "year" ? "연도별" : trendType === "month" ? "월별" : "일별";

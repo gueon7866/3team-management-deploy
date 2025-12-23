@@ -54,6 +54,18 @@ const AdminCouponListPage = () => {
     }
   };
 
+  const handleDelete = async (couponId) => {
+    if (!window.confirm("이 쿠폰을 삭제하시겠습니까?\n삭제된 쿠폰은 복구할 수 없습니다.")) return;
+
+    try {
+      await couponApi.deleteCoupon(couponId);
+      alert("쿠폰이 삭제되었습니다.");
+      loadCoupons();
+    } catch (err) {
+      alert(err.response?.data?.message || "삭제에 실패했습니다.");
+    }
+  };
+
   if (loading) return <Loader />;
 
   return (
@@ -108,14 +120,30 @@ const AdminCouponListPage = () => {
                     )}
                   </td>
                   <td>
-                    {coupon.isActive && (
+                    <div className="action-buttons">
+                      <button
+                        className="btn btn-primary"
+                        onClick={() => navigate(`/admin/coupons/${coupon.id || coupon._id}/edit`)}
+                        style={{ marginRight: "8px" }}
+                      >
+                        수정
+                      </button>
+                      {coupon.isActive && (
+                        <button
+                          className="btn btn-warning"
+                          onClick={() => handleDeactivate(coupon.id || coupon._id)}
+                          style={{ marginRight: "8px" }}
+                        >
+                          비활성화
+                        </button>
+                      )}
                       <button
                         className="btn btn-danger"
-                        onClick={() => handleDeactivate(coupon.id || coupon._id)}
+                        onClick={() => handleDelete(coupon.id || coupon._id)}
                       >
-                        비활성화
+                        삭제
                       </button>
-                    )}
+                    </div>
                   </td>
                 </tr>
               ))

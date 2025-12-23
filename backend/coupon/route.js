@@ -5,6 +5,9 @@ import requireRole from "../common/rolemiddleware.js";
 import {
   postCouponAsAdmin,
   getCouponsAsAdmin,
+  getCouponByIdAsAdmin,
+  updateCouponAsAdmin,
+  deleteCouponAsAdmin,
   deactivateCouponAsAdmin,
   getCouponsAsOwner,
 } from "./controller.js";
@@ -25,6 +28,30 @@ router.get(
   verifyToken,
   requireRole("admin"),
   getCouponsAsAdmin
+);
+
+// ADMIN: 쿠폰 조회 (단일)
+router.get(
+  "/admin/:id",
+  verifyToken,
+  requireRole("admin"),
+  getCouponByIdAsAdmin
+);
+
+// ADMIN: 쿠폰 수정
+router.put(
+  "/admin/:id",
+  verifyToken,
+  requireRole("admin"),
+  updateCouponAsAdmin
+);
+
+// ADMIN: 쿠폰 삭제
+router.delete(
+  "/admin/:id",
+  verifyToken,
+  requireRole("admin"),
+  deleteCouponAsAdmin
 );
 
 // ADMIN: 쿠폰 비활성화

@@ -116,17 +116,29 @@ export const getUsers = async (options = {}) => {
 
 // Admin: 역할 변경 / 블락 토글
 export const updateUserByAdmin = async (userId, updates) => {
-  const user = await User.findById(userId);
+  // 먼저 User 모델에서 찾기 (owner/admin)
+  let user = await User.findById(userId);
+  
+  // User 모델에 없으면 GeneralUser 모델에서 찾기 (일반 회원)
+  if (!user) {
+    user = await GeneralUser.findById(userId);
+  }
+  
   if (!user) {
     const err = new Error("USER_NOT_FOUND");
     err.statusCode = 404;
     throw err;
   }
 
-  const fields = ["role", "isBlocked"];
-  fields.forEach((f) => {
-    if (updates[f] !== undefined) user[f] = updates[f];
-  });
+  // isBlocked 필드 업데이트
+  if (updates.isBlocked !== undefined) {
+    user.isBlocked = updates.isBlocked;
+  }
+  
+  // role 필드 업데이트 (User 모델에만 적용)
+  if (updates.role !== undefined && user instanceof User) {
+    user.role = updates.role;
+  }
 
   return await user.save();
 };

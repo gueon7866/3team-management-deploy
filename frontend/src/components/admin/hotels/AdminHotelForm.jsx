@@ -124,7 +124,12 @@ const AdminHotelForm = ({ hotel, onSubmit, onCancel }) => {
         });
       }
 
-      // 이미지 파일 추가
+      // 기존 이미지 URL 추가 (제거된 이미지를 반영하기 위해 현재 preview에 있는 기존 이미지만 포함)
+      existingImages.forEach((imageUrl) => {
+        submitData.append("images", imageUrl);
+      });
+
+      // 새로 업로드할 이미지 파일 추가
       images.forEach((image) => {
         submitData.append("images", image);
       });
